@@ -106,11 +106,14 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
 				sizeof(rf_test_get_temperature));
 
+		if (def_dev_ctx->rf_test_cap_data) {
+			nrf_wifi_osal_mem_cpy(def_dev_ctx->rf_test_cap_data,
+				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
+				sizeof(rf_test_get_temperature));
+		}
+
 		if (rf_test_get_temperature.readTemperatureStatus) {
 			nrf_wifi_osal_log_err("Temperature reading failed");
-		} else {
-			nrf_wifi_osal_log_info("The temperature is = %d degree celsius",
-					       rf_test_get_temperature.temperature);
 		}
 		break;
 	case NRF_WIFI_RF_TEST_EVENT_GET_BAT_VOLT:
@@ -119,37 +122,22 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 				      sizeof(bat_volt_params));
 		if (bat_volt_params.cmd_status) {
 			nrf_wifi_osal_log_err("Battery Volatge reading failed");
-		} else {
-			bat_volt = (VBAT_OFFSET_MILLIVOLT +
-			(VBAT_SCALING_FACTOR * bat_volt_params.voltage));
-
-			nrf_wifi_osal_log_info("The battery voltage is = %d mV",
-						bat_volt);
 		}
 		break;
 	case NRF_WIFI_RF_TEST_EVENT_RF_RSSI:
 		nrf_wifi_osal_mem_cpy(&rf_get_rf_rssi,
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
 				sizeof(rf_get_rf_rssi));
-
-		nrf_wifi_osal_log_info("RF RSSI value is = %d",
-				       rf_get_rf_rssi.agc_status_val);
 		break;
 	case NRF_WIFI_RF_TEST_EVENT_XO_CALIB:
 		nrf_wifi_osal_mem_cpy(&xo_calib_params,
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
 				sizeof(xo_calib_params));
-
-		nrf_wifi_osal_log_info("XO value configured is = %d",
-				       xo_calib_params.xo_val);
 		break;
 	case NRF_WIFI_RF_TEST_XO_TUNE:
 		nrf_wifi_osal_mem_cpy(&rf_get_xo_value_params,
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
 				sizeof(rf_get_xo_value_params));
-
-		nrf_wifi_osal_log_info("Best XO value is = %d",
-				       rf_get_xo_value_params.xo_value);
 		break;
 	default:
 		break;

@@ -152,6 +152,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_dpd(struct nrf_wifi_fmac_dev_ctx *
 /**
  * @brief Get temperature in Fahrenheit using temperature sensor.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
+ * @param temperature Pointer to int where the temperature value will be stored.
  *
  * This function is used to send a command to:
  *	- The RPU firmware to get the current temperature using the radio test mode.
@@ -159,11 +160,12 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_dpd(struct nrf_wifi_fmac_dev_ctx *
  * @retval NRF_WIFI_STATUS_SUCCESS On Success
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_temp(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx);
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_temp(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx, int *temperature);
 
 /**
  * @brief Logs the battery voltage in milliVolts.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
+ * @param bat_volt Pointer to int where the battery voltage will be stored.
  *
  * This function is used to send a command to:
  *	- The RPU firmware to acquire the battery voltage using
@@ -172,11 +174,12 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_temp(struct nrf_wifi_fmac_dev_ctx *
  * @retval NRF_WIFI_STATUS_SUCCESS On Success
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_bat_volt(struct nrf_wifi_fmac_dev_ctx* fmac_dev_ctx);
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_bat_volt(struct nrf_wifi_fmac_dev_ctx* fmac_dev_ctx, int *bat_volt);
 
 /**
  * @brief Get RF RSSI status.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
+ * @param rssi Pointer to int where the RSSI value will be stored.
  *
  * This function is used to send a command to:
  *	- The RPU firmware to get RF RSSI status in radio test mode.
@@ -184,13 +187,13 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_bat_volt(struct nrf_wifi_fmac_dev_c
  * @retval NRF_WIFI_STATUS_SUCCESS On Success
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_rf_rssi(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx);
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_rf_rssi(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx, int *rssi);
 
 
 /**
  * @brief Set XO adjustment value.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param value XO adjustment value.
+ * @param xo_value Pointer to int where the XO calibrated value will be stored.
  *
  * This function is used to send a command to:
  *	- The RPU firmware to set XO adjustment value in radio test mode.
@@ -198,12 +201,12 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_rf_rssi(struct nrf_wifi_fmac_dev_ct
  * @retval NRF_WIFI_STATUS_SUCCESS On Success
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
-enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-						 unsigned char value);
+enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx, unsigned char xo_value);
 
 /**
  * @brief Get XO calibrated value.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
+ * @param xo_value Pointer to int where the XO tune value will be stored.
  *
  * This function is used to send a command to:
  *	- The RPU firmware wherein the RPU firmware estimates and
@@ -212,8 +215,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *f
  * @retval NRF_WIFI_STATUS_SUCCESS On Success
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_compute_xo(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx);
-
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_compute_xo(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx, int *xo_value);
 
 /**
  * @brief Adds a RPU instance.
