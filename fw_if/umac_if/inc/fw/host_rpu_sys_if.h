@@ -1133,6 +1133,10 @@ struct rpu_conf_params {
 	unsigned short int capture_length;
 	/** Capture timeout in seconds */
 	unsigned short int capture_timeout;
+	/** ED threshold for OFDM dynamic capture (stored as 8-bit signed value) */
+	unsigned char ed_thresh_ofdm;
+	/** ED threshold for DSSS dynamic capture (stored as 8-bit signed value) */
+	unsigned char ed_thresh_dsss;
 	/** Configure WLAN to bypass regulatory */
 	unsigned char bypass_regulatory;
 	/** Two letter country code (00: Default for WORLD) */

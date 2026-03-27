@@ -533,6 +533,8 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rx_cap(struct nrf_wifi_fmac_dev_ct
 						     unsigned short int capture_timeout ,
 						     unsigned char lna_gain,
 						     unsigned char bb_gain,
+						     unsigned char ed_thresh_ofdm,
+						     unsigned char ed_thresh_dsss,
 						     unsigned char *capture_status)
 {
 	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
@@ -569,6 +571,8 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rx_cap(struct nrf_wifi_fmac_dev_ct
 	rf_test_cap_params.lna_gain = lna_gain;
 	rf_test_cap_params.bb_gain = bb_gain;
 #ifdef WIFI_NRF71
+	rf_test_cap_params.ed_thresh_ofdm = ed_thresh_ofdm;
+	rf_test_cap_params.ed_thresh_dsss = ed_thresh_dsss;
 
 	rf_test_cap_params.capture_addr = (unsigned int *)(unsigned long)RPU_MEM_RF_TEST_CAP_BASE;
 #endif
@@ -613,6 +617,80 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rx_cap(struct nrf_wifi_fmac_dev_ct
 out:
 	return status;
 }
+
+#ifdef WIFI_NRF71
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_adpll_cap(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+							void *cap_data,
+							unsigned short int cap_len,
+							unsigned char enabled,
+							unsigned char enable_tracing,
+							unsigned char *capture_status)
+{
+	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
+	struct nrf_wifi_set_adpll_capture_params params;
+	struct nrf_wifi_rt_fmac_dev_ctx *rt_dev_ctx = NULL;
+	unsigned int count = 0;
+
+	if (fmac_dev_ctx->op_mode != NRF_WIFI_OP_MODE_RT) {
+		nrf_wifi_osal_log_err("%s: Invalid op mode", __func__);
+		goto out;
+	}
+	if (cap_data == NULL || capture_status == NULL) {
+		nrf_wifi_osal_log_err("%s: cap_data or capture_status is NULL", __func__);
+		goto out;
+	}
+	if (cap_len == 0 || cap_len > NRF_WIFI_RF_TEST_RX_CAPTURE_MAX_SAMPLES) {
+		nrf_wifi_osal_log_err("%s: cap_len %u must be 1..%u",
+				      __func__,
+				      cap_len,
+				      (unsigned int)NRF_WIFI_RF_TEST_RX_CAPTURE_MAX_SAMPLES);
+		goto out;
+	}
+
+	nrf_wifi_osal_mem_set(&params, 0, sizeof(params));
+	params.test = (unsigned char)NRF_WIFI_RF_TEST_ADPLL_CAP_NORMAL;
+	params.enabled = enabled;
+	params.enable_tracing = enable_tracing;
+	params.cap_len = cap_len;
+	params.cap_addr = (unsigned int *)(unsigned long)RPU_MEM_RF_TEST_CAP_BASE;
+
+	rt_dev_ctx = wifi_dev_priv(fmac_dev_ctx);
+	rt_dev_ctx->rf_test_type = NRF_WIFI_RF_TEST_ADPLL_CAP_NORMAL;
+	rt_dev_ctx->rf_test_cap_data = cap_data;
+	rt_dev_ctx->rf_test_cap_sz = (unsigned int)cap_len * 4U;
+	rt_dev_ctx->capture_status = 0;
+
+	status = umac_cmd_rt_prog_rf_test(fmac_dev_ctx,
+					  &params,
+					  sizeof(params));
+	if (status != NRF_WIFI_STATUS_SUCCESS) {
+		nrf_wifi_osal_log_err("%s: umac_cmd_rt_prog_rf_test adpll_cap failed", __func__);
+		goto out;
+	}
+
+	do {
+		nrf_wifi_osal_sleep_ms(100);
+		count++;
+	} while ((rt_dev_ctx->rf_test_type != NRF_WIFI_RF_TEST_MAX) &&
+		 (count < NRF_WIFI_FMAC_RF_TEST_EVNT_TIMEOUT));
+
+	if (count == NRF_WIFI_FMAC_RF_TEST_EVNT_TIMEOUT) {
+		nrf_wifi_osal_log_err("%s: Timed out", __func__);
+		rt_dev_ctx->rf_test_type = NRF_WIFI_RF_TEST_MAX;
+		rt_dev_ctx->rf_test_cap_data = NULL;
+		rt_dev_ctx->rf_test_cap_sz = 0;
+		status = NRF_WIFI_STATUS_FAIL;
+		goto out;
+	}
+
+	*capture_status = rt_dev_ctx->capture_status;
+	rt_dev_ctx->rf_test_cap_data = NULL;
+	rt_dev_ctx->rf_test_cap_sz = 0;
+	status = NRF_WIFI_STATUS_SUCCESS;
+out:
+	return status;
+}
+#endif /* WIFI_NRF71 */
 
 
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_tx_tone(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,

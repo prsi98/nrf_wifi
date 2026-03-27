@@ -99,6 +99,14 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 		def_dev_ctx->capture_status = rf_test_capture_params.capture_status;
 
 		break;
+#ifdef WIFI_NRF71
+	case NRF_WIFI_RF_TEST_EVENT_ADPLL_CAP_NORMAL:
+		status = hal_rpu_mem_read(fmac_dev_ctx->hal_dev_ctx,
+					  def_dev_ctx->rf_test_cap_data,
+					  RPU_MEM_RF_TEST_CAP_BASE,
+					  def_dev_ctx->rf_test_cap_sz);
+		break;
+#endif /* WIFI_NRF71 */
 	case NRF_WIFI_RF_TEST_EVENT_TX_TONE_START:
 	case NRF_WIFI_RF_TEST_EVENT_DPD_ENABLE:
 		break;

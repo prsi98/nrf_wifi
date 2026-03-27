@@ -108,7 +108,22 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rx_cap(struct nrf_wifi_fmac_dev_ct
 						     unsigned short int capture_timeout,
 						     unsigned char lna_gain,
 						     unsigned char bb_gain,
+						     unsigned char ed_thresh_ofdm,
+						     unsigned char ed_thresh_dsss,
 						     unsigned char *timeout_status);
+
+#ifdef WIFI_NRF71
+/**
+ * @brief ADPLL capture (NRF_WIFI_RF_TEST_ADPLL_CAP_NORMAL).
+ * Staging buffer is @ref RPU_MEM_RF_TEST_CAP_BASE
+ */
+enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_adpll_cap(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+							void *cap_data,
+							unsigned short int cap_len,
+							unsigned char enabled,
+							unsigned char enable_tracing,
+							unsigned char *capture_status);
+#endif /* WIFI_NRF71 */
 
 
 /**
