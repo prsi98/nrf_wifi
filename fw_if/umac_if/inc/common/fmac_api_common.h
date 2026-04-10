@@ -258,6 +258,10 @@ enum nrf_wifi_status nrf_wifi_fmac_stats_reset(struct nrf_wifi_fmac_dev_ctx *fma
 
 #ifdef WIFI_NRF71
 #ifdef PHY_RF_PARAM_GDRAM
+#define NRF_WIFI_PHY_RF_PARAM_HEX_STR_MAX 512
+
+enum nrf_wifi_status nrf_wifi_fmac_set_phy_rf_param_hex(unsigned int param_no, const char *hex_str);
+
 enum nrf_wifi_status nrf_wifi_fmac_config_rf_params(void *dev_ctx,
                                                     unsigned int *rf_params_addr);
 

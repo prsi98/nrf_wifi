@@ -749,12 +749,63 @@ hex_param_t params[NUM_WIFI_PARAMS] = {
         {NRF_WIFI_PARAMS22,  NULL, 0, 0}
 };
 
+static char phy_rf_param_hex_ov[NUM_WIFI_PARAMS][NRF_WIFI_PHY_RF_PARAM_HEX_STR_MAX];
+static bool phy_rf_param_hex_ov_valid[NUM_WIFI_PARAMS];
+
+enum nrf_wifi_status nrf_wifi_fmac_set_phy_rf_param_hex(unsigned int param_no, const char *hex_str)
+{
+	unsigned int idx;
+	unsigned int i;
+	unsigned int len;
+	unsigned char ch;
+
+	if (!hex_str) {
+		nrf_wifi_osal_log_err("%s: hex_str is NULL", __func__);
+		return NRF_WIFI_STATUS_FAIL;
+	}
+	if (param_no < 1 || param_no > (unsigned int)NUM_WIFI_PARAMS) {
+		nrf_wifi_osal_log_err("%s: param_no %u out of range 1..%u",
+				      __func__, param_no, NUM_WIFI_PARAMS);
+		return NRF_WIFI_STATUS_FAIL;
+	}
+
+	idx = param_no - 1;
+	len = nrf_wifi_osal_strlen(hex_str);
+	if (len == 0) {
+		nrf_wifi_osal_log_err("%s: empty hex string", __func__);
+		return NRF_WIFI_STATUS_FAIL;
+	}
+	if (len >= NRF_WIFI_PHY_RF_PARAM_HEX_STR_MAX) {
+		nrf_wifi_osal_log_err("%s: hex string length %u >= max %u",
+				      __func__, len, NRF_WIFI_PHY_RF_PARAM_HEX_STR_MAX);
+		return NRF_WIFI_STATUS_FAIL;
+	}
+	if (len % 2) {
+		nrf_wifi_osal_log_err("%s: odd hex length %u", __func__, len);
+		return NRF_WIFI_STATUS_FAIL;
+	}
+
+	for (i = 0; i < len; i++) {
+		ch = hex_str[i];
+		ch = (unsigned char)((ch >= 'A' && ch <= 'Z') ? ch + 32 : ch);
+		if ((ch < '0' || ch > '9') && (ch < 'a' || ch > 'f')) {
+			nrf_wifi_osal_log_err("%s: invalid hex at offset %u", __func__, i);
+			return NRF_WIFI_STATUS_FAIL;
+		}
+	}
+
+	nrf_wifi_osal_mem_cpy(phy_rf_param_hex_ov[idx], hex_str, len + 1);
+	phy_rf_param_hex_ov_valid[idx] = true;
+
+	return NRF_WIFI_STATUS_SUCCESS;
+}
+
 enum nrf_wifi_status nrf_wifi_fmac_config_rf_params(void *dev_ctx,
                                                     unsigned int *rf_params_addr)
 {
         enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
         int index;
-        char *rf_param_str = NULL;
+        const char *rf_param_str = NULL;
         unsigned int str_len;
         int ret;
         struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx = NULL;
@@ -766,7 +817,9 @@ enum nrf_wifi_status nrf_wifi_fmac_config_rf_params(void *dev_ctx,
 
         for (index = 0; index < NUM_WIFI_PARAMS; index++) {
 
-                rf_param_str = params[index].hex_str;
+                rf_param_str = phy_rf_param_hex_ov_valid[index] ?
+                                       phy_rf_param_hex_ov[index] :
+                                       params[index].hex_str;
                 if (rf_param_str) {
                         str_len =
                                 nrf_wifi_osal_strlen(rf_param_str);
@@ -782,7 +835,7 @@ enum nrf_wifi_status nrf_wifi_fmac_config_rf_params(void *dev_ctx,
 
                         ret = nrf_wifi_utils_hex_str_to_val(params[index].bytes,
                                                             str_len,
-                                                            rf_param_str);
+                                                            (unsigned char *)rf_param_str);
 
                         if (ret == -1) {
                                 nrf_wifi_osal_log_err("%s: hex_str_to_val failed\n",
