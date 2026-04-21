@@ -83,6 +83,20 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_prog_tx(struct nrf_wifi_fmac_dev_ctx *fmac
 enum nrf_wifi_status nrf_wifi_rt_fmac_prog_rx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 					      struct rpu_conf_params *params);
 
+#ifdef WIFI_NRF71
+/**
+ * @brief Push full @ref rpu_conf_params to RPU (NRF_WIFI_CMD_MAC_PARAM_UPDATE).
+ *
+ * Call before @ref nrf_wifi_rt_fmac_prog_tx or @ref nrf_wifi_rt_fmac_prog_rx so
+ * firmware sees updated MAC/PHY fields (e.g. BSS color, station ID, bss check).
+ *
+ * @retval NRF_WIFI_STATUS_SUCCESS On success
+ * @retval NRF_WIFI_STATUS_FAIL On failure
+ */
+enum nrf_wifi_status nrf_wifi_rt_fmac_prog_mac_param_update(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	struct rpu_conf_params *params);
+#endif /* WIFI_NRF71 */
 
 /**
  * @brief Start RF test capture in radio test mode.

@@ -9,6 +9,7 @@
  * radio test mode in the FMAC IF Layer of the Wi-Fi driver.
  */
 
+
 #include "radio_test/fmac_cmd.h"
 #include "common/hal_api_common.h"
 #include "nrf71_wifi_rf.h"
@@ -299,6 +300,51 @@ enum nrf_wifi_status umac_cmd_rt_prog_tx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_
 out:
 	return status;
 }
+
+#ifdef WIFI_NRF71
+enum nrf_wifi_status umac_cmd_rt_prog_mac_param_update(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	struct rpu_conf_params *params)
+{
+	struct host_rpu_msg *umac_cmd = NULL;
+	struct nrf_wifi_cmd_mac_param_update *umac_cmd_data = NULL;
+	int len = 0;
+	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
+
+	len = sizeof(*umac_cmd_data);
+
+	umac_cmd = umac_cmd_alloc(fmac_dev_ctx,
+				  NRF_WIFI_HOST_RPU_MSG_TYPE_SYSTEM,
+				  len);
+
+	if (!umac_cmd) {
+		nrf_wifi_osal_log_err("%s: umac_cmd_alloc failed",
+				      __func__);
+		goto out;
+	}
+
+	umac_cmd_data = (struct nrf_wifi_cmd_mac_param_update *)(umac_cmd->msg);
+
+	umac_cmd_data->sys_head.cmd_event = NRF_WIFI_CMD_MAC_PARAM_UPDATE;
+	umac_cmd_data->sys_head.len = len;
+
+	nrf_wifi_osal_mem_cpy(&umac_cmd_data->conf,
+			      params,
+			      sizeof(umac_cmd_data->conf));
+
+
+	status = nrf_wifi_hal_ctrl_cmd_send(fmac_dev_ctx->hal_dev_ctx,
+					    umac_cmd,
+					    (sizeof(*umac_cmd) + len));
+
+	nrf_wifi_osal_log_dbg("%s: MAC_PARAM_UPDATE hal_ctrl_cmd_send status=%d",
+				      __func__,
+	       (int)status);
+
+out:
+	return status;
+}
+#endif /* WIFI_NRF71 */
 
 
 enum nrf_wifi_status umac_cmd_rt_prog_rx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,

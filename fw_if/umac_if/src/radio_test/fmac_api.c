@@ -435,6 +435,47 @@ out:
 	return status;
 }
 
+#ifdef WIFI_NRF71
+enum nrf_wifi_status nrf_wifi_rt_fmac_prog_mac_param_update(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	struct rpu_conf_params *params)
+{
+	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
+	struct nrf_wifi_rt_fmac_dev_ctx *rt_dev_ctx = NULL;
+
+	if (fmac_dev_ctx->op_mode != NRF_WIFI_OP_MODE_RT) {
+		nrf_wifi_osal_log_err("%s: Invalid op mode",
+				      __func__);
+		goto out;
+	}
+
+	rt_dev_ctx = wifi_dev_priv(fmac_dev_ctx);
+
+
+	rt_dev_ctx->radio_cmd_done = false;
+	status = umac_cmd_rt_prog_mac_param_update(fmac_dev_ctx,
+						   params);
+
+	if (status != NRF_WIFI_STATUS_SUCCESS) {
+		nrf_wifi_osal_log_err("%s: Unable to send MAC param update",
+				      __func__);
+		goto out;
+	}
+
+	status = wait_for_radio_cmd_status(fmac_dev_ctx,
+					   RADIO_CMD_STATUS_TIMEOUT);
+	if (status != NRF_WIFI_STATUS_SUCCESS) {
+		nrf_wifi_osal_log_err("%s: wait status failed",
+				      __func__);
+		goto out;
+	}
+
+
+out:
+	return status;
+}
+#endif /* WIFI_NRF71 */
+
 
 enum nrf_wifi_status nrf_wifi_rt_fmac_prog_tx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 					      struct rpu_conf_params *params)

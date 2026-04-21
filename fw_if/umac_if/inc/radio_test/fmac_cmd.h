@@ -52,6 +52,12 @@ enum nrf_wifi_status umac_cmd_rt_prog_tx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_
 enum nrf_wifi_status umac_cmd_rt_prog_rx(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 					 struct rpu_conf_rx_radio_test_params *rx_params);
 
+#ifdef WIFI_NRF71
+enum nrf_wifi_status umac_cmd_rt_prog_mac_param_update(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	struct rpu_conf_params *params);
+#endif /* WIFI_NRF71 */
+
 enum nrf_wifi_status umac_cmd_rt_prog_rf_test(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 					      void *rf_test_params,
 					      unsigned int rf_test_params_sz);
