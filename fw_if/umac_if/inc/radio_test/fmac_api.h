@@ -379,6 +379,11 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_set_mem(struct nrf_wifi_fmac_dev_c
  */
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_read_mem(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 						      struct nrf_wifi_rf_config_mem *config_mem);
+
+/** Decode PARAM10 hex and update cached antenna gains for the next RADIO_TEST_INIT. */
+enum nrf_wifi_status nrf_wifi_rt_fmac_tx_pwr_ctrl_apply_param10(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	const char *hex10);
 #endif
 
 /**

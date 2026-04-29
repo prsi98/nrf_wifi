@@ -281,9 +281,81 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_dev_init(struct nrf_wifi_fmac_dev_ctx *fma
 	if (status == NRF_WIFI_STATUS_FAIL) {
 		goto out;
 	}
+#ifdef WIFI_NRF71
+	{
+		struct nrf_wifi_rt_fmac_dev_ctx *rt_ctx =
+			(struct nrf_wifi_rt_fmac_dev_ctx *)wifi_dev_priv(fmac_dev_ctx);
+
+		nrf_wifi_osal_mem_cpy(&rt_ctx->tx_pwr_ctrl_stored,
+				      tx_pwr_ctrl_params,
+				      sizeof(rt_ctx->tx_pwr_ctrl_stored));
+	}
+#endif /* WIFI_NRF71 */
 out:
 	return status;
 }
+
+#ifdef WIFI_NRF71
+static unsigned int nrf_wifi_rt_fmac_hex_nibble(unsigned char c)
+{
+	if (c >= '0' && c <= '9') {
+		return (unsigned int)(c - '0');
+	}
+	if (c >= 'a' && c <= 'f') {
+		return 10U + (unsigned int)(c - 'a');
+	}
+	if (c >= 'A' && c <= 'F') {
+		return 10U + (unsigned int)(c - 'A');
+	}
+	return 16U;
+}
+
+enum nrf_wifi_status nrf_wifi_rt_fmac_tx_pwr_ctrl_apply_param10(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	const char *hex10)
+{
+	struct nrf_wifi_rt_fmac_dev_ctx *rt_ctx = NULL;
+	unsigned char ag[10];
+	unsigned int i;
+
+	if (!fmac_dev_ctx || !hex10) {
+		return NRF_WIFI_STATUS_FAIL;
+	}
+
+	if (nrf_wifi_osal_strlen(hex10) != 10U) {
+		return NRF_WIFI_STATUS_FAIL;
+	}
+
+	for (i = 0U; i < 5U; i++) {
+		unsigned int hi = nrf_wifi_rt_fmac_hex_nibble((unsigned char)hex10[2U * i]);
+		unsigned int lo = nrf_wifi_rt_fmac_hex_nibble((unsigned char)hex10[2U * i + 1U]);
+		unsigned int byte;
+
+		if (hi >= 16U || lo >= 16U) {
+			return NRF_WIFI_STATUS_FAIL;
+		}
+		byte = (hi << 4) | lo;
+
+		ag[2U * i] = (unsigned char)(byte & 0x0FU);
+		ag[2U * i + 1U] = (unsigned char)((byte >> 4) & 0x0FU);
+	}
+
+	rt_ctx = wifi_dev_priv(fmac_dev_ctx);
+
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_2g = ag[0];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_5g_band1 = ag[1];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_5g_band2 = ag[2];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_5g_band3 = ag[3];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band1 = ag[4];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band2 = ag[5];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band3 = ag[6];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band4 = ag[7];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band5 = ag[8];
+	rt_ctx->tx_pwr_ctrl_stored.ant_gain_6g_band6 = ag[9];
+
+	return NRF_WIFI_STATUS_SUCCESS;
+}
+#endif /* WIFI_NRF71 */
 
 void nrf_wifi_rt_fmac_dev_deinit(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx)
 {
@@ -390,6 +462,9 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_radio_test_init(struct nrf_wifi_fmac_dev_c
 			      0,
 			      sizeof(init_params));
 #ifdef WIFI_NRF71
+	nrf_wifi_osal_mem_cpy(&init_params.tx_pwr_ctrl_params,
+			      &rt_dev_ctx->tx_pwr_ctrl_stored,
+			      sizeof(init_params.tx_pwr_ctrl_params));
 #ifdef PHY_RF_PARAM_GDRAM
 	nrf_wifi_osal_mem_cpy(init_params.rf_params_addr,
 			      params->rf_params_addr,
@@ -399,7 +474,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_radio_test_init(struct nrf_wifi_fmac_dev_c
 	nrf_wifi_osal_mem_cpy(init_params.rf_params,
 			      params->rf_params,
 			      NRF_WIFI_RF_PARAMS_SIZE);
-#endif
+#endif /* PHY_RF_PARAM_GDRAM */
 #else
 	nrf_wifi_osal_mem_cpy(init_params.rf_params,
 			      params->rf_params,
