@@ -242,6 +242,13 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 					      def_dev_ctx->rf_test_cap_sz);
 		}
 		break;
+	case NRF_WIFI_RF_TEST_EVENT_GET_STATS:
+		if (def_dev_ctx->rf_test_cap_data && def_dev_ctx->rf_test_cap_sz) {
+			nrf_wifi_osal_mem_cpy(def_dev_ctx->rf_test_cap_data,
+					      (const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
+					      def_dev_ctx->rf_test_cap_sz);
+		}
+		break;
 	default:
 		break;
 	}
