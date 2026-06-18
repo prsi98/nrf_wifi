@@ -31,7 +31,7 @@
  */
 struct nrf_wifi_rt_fmac_dev_ctx {
 	/** Firmware RF test command type. */
-	enum nrf_wifi_rf_test rf_test_type;
+	unsigned char rf_test_type;
 	/** Firmware RF test capability data. */
 	void *rf_test_cap_data;
 	/** Firmware RF test capability data size. */

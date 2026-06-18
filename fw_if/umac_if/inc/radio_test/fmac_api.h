@@ -126,20 +126,6 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rx_cap(struct nrf_wifi_fmac_dev_ct
 						     unsigned char ed_thresh_dsss,
 						     unsigned char *timeout_status);
 
-#ifdef WIFI_NRF71
-/**
- * @brief ADPLL capture (NRF_WIFI_RF_TEST_ADPLL_CAP_NORMAL).
- * Staging buffer is @ref RPU_MEM_RF_TEST_CAP_BASE
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_adpll_cap(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-							void *cap_data,
-							unsigned short int cap_len,
-							unsigned char enabled,
-							unsigned char enable_tracing,
-							unsigned char *capture_status);
-#endif /* WIFI_NRF71 */
-
-
 /**
  * @brief Start/Stop RF TX tone test in radio test mode.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
@@ -171,6 +157,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_tx_tone(struct nrf_wifi_fmac_dev_c
 
 
 
+#ifndef WIFI_NRF71
 /**
  * @brief Start/Stop RF DPD test in radio test mode.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
@@ -184,8 +171,6 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_tx_tone(struct nrf_wifi_fmac_dev_c
  */
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_dpd(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
 						  unsigned char enable);
-
-
 
 /**
  * @brief Get temperature in Fahrenheit using temperature sensor.
@@ -223,7 +208,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_bat_volt(struct nrf_wifi_fmac_dev_c
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_get_rf_rssi(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx);
-
+#endif /* !WIFI_NRF71 */
 
 /**
  * @brief Set XO adjustment value.
@@ -248,6 +233,13 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *f
 						 unsigned char value);
 #endif
 
+#ifdef WIFI_NRF71
+/** Decode PARAM10 hex and update cached antenna gains for the next RADIO_TEST_INIT. */
+enum nrf_wifi_status nrf_wifi_rt_fmac_tx_pwr_ctrl_apply_param10(
+	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
+	const char *hex10);
+#endif /* WIFI_NRF71 */
+
 /**
  * @brief Get XO calibrated value.
  * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
@@ -260,131 +252,6 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *f
  * @retval NRF_WIFI_STATUS_FAIL On failure to execute command
  */
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_compute_xo(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx);
-
-#ifdef WIFI_NRF71
-/**
- * @brief Run RF calibration on the device.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param calib_params Calibration request (calib_bitmap, sys_operating_mode, index; rf_calib_results not used).
- *
- * Requests the FW to run selected calibrations (PHY channel switch in calibration mode).
- * FW uses current RF configuration (band, channel). Completion signaled via NRF_WIFI_RF_TEST_EVENT_PERFORM_CALIBRATION.
- *
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_perform_calib(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-							   struct nrf_wifi_rf_calib *calib_params);
-
-/**
- * @brief Apply calibration compensation from host-provided results.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param calib_params Contains test=NRF_WIFI_RF_APPLY_COMPENSATION and index (result slot).
- * @param result_buf Buffer with calibration results (at least CAL_MEM_SIZE bytes), in RPU-accessible
- *        (shared) memory. Its address is sent in calib_params; FW reads from it (same model as
- *        rf_params_addr / vtf_buffer_addr).
- *
- * FW copies result data from this address into RF_WORKING_CHAN_COMP_PARAMS[index] and runs rf_comp().
- * Completion signaled via NRF_WIFI_RF_TEST_EVENT_APPLY_COMPENSATION.
- *
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_apply_compensation(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-							       struct nrf_wifi_rf_calib *calib_params,
-							       const void *result_buf);
-
-/**
- * @brief Read calibration/compensation results from FW into host buffer.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param params test=NRF_WIFI_RF_READ_COMP_RESULTS, mode (OPERATING_CHANNEL_RESULTS/SCAN_CHANNEL_RESULTS),
- *        index (0 or 1), rf_calib_results = buffer in RPU-accessible memory (size >= CAL_MEM_SIZE).
- *        FW writes results to this address (same model as rf_params/VTF).
- *
- * Completion signaled via NRF_WIFI_RF_TEST_EVENT_READ_COMP_RESULTS.
- *
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_read_comp_results(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-							       struct nrf_wifi_rf_read_calib_results *params);
-
-/**
- * @brief Start RF RH oneshot test in radio test mode.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param params Parameters necessary for the RF RH oneshot test.
- * This function is used to send a command to:
- *	- The RPU firmware to start the RF RH oneshot test in radio test mode.
- *    The RF RH oneshot test calculate RSSI histogram for the specified duration and returns the results to the host. 
- */ 
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_rh_oneshot(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-	struct nrf_wifi_rh_test_params *params);
-
-/**
- * @brief Enable or disable VT calibration (NRF_WIFI_RF_TEST_ENABLE_VT_CALIB).
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param enable 1 to enable, 0 to disable.
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_enable_vt_calibration(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-								    unsigned char enable);
-
-/**
- * @brief Enable or disable VT compensation (NRF_WIFI_RF_TEST_ENABLE_VT_COMP).
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param enable 1 to enable, 0 to disable.
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_enable_vt_compensation(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-								      unsigned char enable);
-
-/**
- * @brief Write RPU registers (NRF_WIFI_RF_TEST_SET_REGS). Max 8 regs.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param config_regs test, num_regs (1..8), reg_addr[], reg_val[].
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_set_regs(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-						      struct nrf_wifi_rf_config_regs *config_regs);
-
-/**
- * @brief Read RPU registers (NRF_WIFI_RF_TEST_READ_REGS). Max 8 regs.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param config_regs On input: test, num_regs (1..8), reg_addr[]. On output: reg_val[] filled.
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_read_regs(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-						       struct nrf_wifi_rf_config_regs *config_regs);
-
-/**
- * @brief Write RPU memory (NRF_WIFI_RF_TEST_SET_MEM). Max 8 locations.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param config_mem test, num_memory_loc (1..8), mem_addr[], mem_val[].
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_set_mem(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-						     struct nrf_wifi_rf_config_mem *config_mem);
-
-/**
- * @brief Read RPU memory (NRF_WIFI_RF_TEST_READ_MEM). Max 8 locations.
- * @param fmac_dev_ctx Pointer to the UMAC IF context for a RPU WLAN device.
- * @param config_mem On input: test, num_memory_loc (1..8), mem_addr[]. On output: mem_val[] filled.
- * @retval NRF_WIFI_STATUS_SUCCESS On success
- * @retval NRF_WIFI_STATUS_FAIL On failure or timeout
- */
-enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_read_mem(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-						      struct nrf_wifi_rf_config_mem *config_mem);
-
-/** Decode PARAM10 hex and update cached antenna gains for the next RADIO_TEST_INIT. */
-enum nrf_wifi_status nrf_wifi_rt_fmac_tx_pwr_ctrl_apply_param10(
-	struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-	const char *hex10);
-#endif
 
 /**
  * @brief Adds a RPU instance.

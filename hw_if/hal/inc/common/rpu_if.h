@@ -277,6 +277,20 @@ struct soft_hpqm_info {
 #define RPU_MEM_RF_TEST_CAP_MAX_BYTES (NRF_WIFI_RF_TEST_RX_CAPTURE_MAX_SAMPLES * 4U)
 #define RPU_MEM_RF_TEST_CAP_BASE \
 	((unsigned int)(HOST_RPU_SOFTHPQM_INFO_START + sizeof(struct soft_hpqm_info)))
+
+/*
+ * GEN3BRF ROM LMAC addresses for RF_WORKING_CHAN_COMP_PARAMS / RF_SCAN_CHAN_COMP_PARAMS.
+ * N_WORKING_CHANNELS=3: working slots are 664 bytes each; scan follows at +3*664.
+ * Patch/non-ROM FW builds may differ; use read_memory if these do not match your image.
+ */
+#define RPU_MEM_RF_WORKING_CHAN_COMP_BASE  0x28000cd0U
+#define RPU_MEM_RF_SCAN_CHAN_COMP_BASE     0x28001498U
+#define RPU_MEM_RF_N_WORKING_CHANNELS      3U
+#define RPU_MEM_RF_CALIB_RESULT_SLOT_SIZE  664U
+/** Single scan_calib_result_t element (FW rf_read_comp_results embed size). */
+#define RPU_MEM_RF_SCAN_CALIB_SLOT_SIZE    0x10cU
+/** Full RF_SCAN_CHAN_COMP_PARAMS[N_SCAN_CHANNELS] retention blob (11 slots). */
+#define RPU_MEM_RF_SCAN_CALIB_ARRAY_SIZE   0xb84U
 #else /* !WIFI_NRF71 */
 #define RPU_MEM_RF_TEST_CAP_BASE 0xB0006000
 #endif /* !WIFI_NRF71 */
