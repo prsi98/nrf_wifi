@@ -57,7 +57,9 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 {
 	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
 	struct nrf_wifi_event_rftest *rf_test_event = NULL;
+#ifndef WIFI_NRF71
 	struct nrf_wifi_rf_test_xo_calib xo_calib_params;
+#endif /* !WIFI_NRF71 */
 	struct nrf_wifi_rf_get_xo_value rf_get_xo_value_params;
 	struct nrf_wifi_rt_fmac_dev_ctx *def_dev_ctx;
 	struct nrf_wifi_rf_test_capture_params rf_test_capture_params;
@@ -141,7 +143,6 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 		nrf_wifi_osal_log_info("RF RSSI value is = %d",
 				       rf_get_rf_rssi.agc_status_val);
 		break;
-#endif /* !WIFI_NRF71 */
 	case NRF_WIFI_RF_TEST_EVENT_XO_CALIB:
 		nrf_wifi_osal_mem_cpy(&xo_calib_params,
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
@@ -150,31 +151,36 @@ static enum nrf_wifi_status umac_event_rt_rf_test_process(struct nrf_wifi_fmac_d
 		nrf_wifi_osal_log_info("XO value configured is = %d",
 				       xo_calib_params.xo_val);
 		break;
+#endif /* !WIFI_NRF71 */
 	case NRF_WIFI_RF_TEST_EVENT_XO_TUNE:
 		nrf_wifi_osal_mem_cpy(&rf_get_xo_value_params,
 				(const unsigned char *)&rf_test_event->rf_test_info.rfevent[0],
 				sizeof(rf_get_xo_value_params));
 #ifdef WIFI_NRF71
-		def_dev_ctx->xo_tune_offset = rf_get_xo_value_params.xo_offset;
+		def_dev_ctx->xo_offset = rf_get_xo_value_params.xo_offset;
 		def_dev_ctx->xo_tune_status = rf_get_xo_value_params.status;
-		if (rf_get_xo_value_params.status == 0) {
-			nrf_wifi_osal_log_info("XO tune: xo_offset = %d (signed PPM)",
-					rf_get_xo_value_params.xo_offset);
-		} else {
-			switch (rf_get_xo_value_params.status) {
-			case 1:
-				nrf_wifi_osal_log_err("XO tune failed: tone not detected");
-				break;
-			case 2:
-				nrf_wifi_osal_log_err("XO tune failed: gain fail (high)");
-				break;
-			case 3:
-				nrf_wifi_osal_log_err("XO tune failed: gain fail (low)");
-				break;
-			case 4:
-				nrf_wifi_osal_log_err("XO tune failed: gain fail (timeout)");
-				break;
-			}
+
+		switch (rf_get_xo_value_params.status) {
+		case 0:
+			nrf_wifi_osal_log_info("XO tune successful, optimal XO offset = %d",
+					       rf_get_xo_value_params.xo_offset);
+			break;
+		case 1:
+			nrf_wifi_osal_log_err("XO tune failed: tone not detected");
+			break;
+		case 2:
+			nrf_wifi_osal_log_err("XO tune failed: gain failure (high)");
+			break;
+		case 3:
+			nrf_wifi_osal_log_err("XO tune failed: gain failure (low)");
+			break;
+		case 4:
+			nrf_wifi_osal_log_err("XO tune failed: gain failure (timeout)");
+			break;
+		default:
+			nrf_wifi_osal_log_err("XO tune failed: unknown status (%d)",
+					      rf_get_xo_value_params.status);
+			break;
 		}
 #else
 		nrf_wifi_osal_log_info("Best XO value is = %d",

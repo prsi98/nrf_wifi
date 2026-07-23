@@ -182,13 +182,13 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_dev_init(struct nrf_wifi_fmac_dev_ctx *fma
 {
 	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
 #ifndef NRF71_ON_IPC
-#ifdef WIFI_NRF71
+#if defined(WIFI_NRF71) && !defined(PHY_RF_PARAM_GDRAM)
 	struct nrf_wifi_phy_rf_params phy_rf_params = { 0};
 	int ret = -1;
-#else /* WIFI_NRF71 */
+#elif !defined(WIFI_NRF71)
         struct nrf_wifi_fmac_otp_info otp_info;
 	struct nrf_wifi_phy_rf_params phy_rf_params;
-#endif /* !WIFI_NRF71 */
+#endif
 #endif /* !NRF71_ON_IPC */
 
 	if (!fmac_dev_ctx) {
@@ -226,7 +226,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_dev_init(struct nrf_wifi_fmac_dev_ctx *fma
 	ret = nrf_wifi_utils_hex_str_to_val(
 			(unsigned char *)&phy_rf_params.phy_params,
 			sizeof(phy_rf_params.phy_params),
-			NRF_WIFI_DEF_RF_PARAMS);
+			NRF_WIFI_RT_DEF_RF_PARAMS);
 	if (ret == -1) {
 		nrf_wifi_osal_log_err("%s: Initialization of RF params with default values failed", __func__);
 		status = NRF_WIFI_STATUS_FAIL;
@@ -974,13 +974,9 @@ out:
 }
 #endif /* !WIFI_NRF71 */
 
-
+#ifndef WIFI_NRF71
 enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx,
-#ifdef WIFI_NRF71
-						 signed char value)
-#else
 						 unsigned char value)
-#endif
 {
 	enum nrf_wifi_status status = NRF_WIFI_STATUS_FAIL;
 	struct nrf_wifi_rf_test_xo_calib nrf_wifi_rf_test_xo_calib_params;
@@ -1001,7 +997,6 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *f
 
 	nrf_wifi_rf_test_xo_calib_params.test = NRF_WIFI_RF_TEST_XO_CALIB;
 	nrf_wifi_rf_test_xo_calib_params.xo_val = value;
-
 
 	rt_dev_ctx->rf_test_type = NRF_WIFI_RF_TEST_XO_CALIB;
 	rt_dev_ctx->rf_test_cap_data = NULL;
@@ -1036,6 +1031,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_set_xo_val(struct nrf_wifi_fmac_dev_ctx *f
 out:
 	return status;
 }
+#endif /* !WIFI_NRF71 */
 
 
 enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_compute_xo(struct nrf_wifi_fmac_dev_ctx *fmac_dev_ctx)
@@ -1092,10 +1088,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_test_compute_xo(struct nrf_wifi_fmac_de
 #ifdef WIFI_NRF71
 	if (rt_dev_ctx->xo_tune_status != 0) {
 		status = NRF_WIFI_STATUS_FAIL;
-		goto out;
 	}
-	nrf_wifi_osal_log_info("%s: XO tune OK, xo_offset = %d (signed PPM)",
-			       __func__, rt_dev_ctx->xo_tune_offset);
 #endif
 
 out:
@@ -1328,13 +1321,7 @@ enum nrf_wifi_status nrf_wifi_rt_fmac_rf_params_get(struct nrf_wifi_fmac_dev_ctx
 
 	ret = nrf_wifi_rt_fmac_phy_rf_params_init(phy_rf_params,
 						  package_info,
-#ifdef WIFI_NRF71
-						  NRF_WIFI_DEF_RF_PARAMS
-#else
-
-						  NRF_WIFI_RT_DEF_RF_PARAMS
-#endif /* WIFI_NRF71 */
-						  );
+						  NRF_WIFI_RT_DEF_RF_PARAMS);
 
 	if (ret == -1) {
 		nrf_wifi_osal_log_err("%s: Initialization of RF params with default values failed",
